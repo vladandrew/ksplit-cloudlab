@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MOUNT_DIR=/mnt/ksplit
+MOUNT_DIR=/opt/ksplit
 
 # Install llvm-10 from apt.llvm.org
 install_llvm() {
