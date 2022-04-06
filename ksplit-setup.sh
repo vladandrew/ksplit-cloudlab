@@ -2,6 +2,18 @@
 
 MOUNT_DIR=/opt/ksplit
 
+USER=${SUDO_USER}
+
+if [[ ${USER} == "" ]]; then
+  USER=$(id -u -n)
+fi
+
+if [[ ${SUDO_GID} == "" ]]; then
+  GROUP=$(id -g -n)
+else
+  GROUP=$(getent group  | grep ${SUDO_GID} | cut -d':' -f1)
+fi
+
 # Install llvm-10 from apt.llvm.org
 install_llvm() {
   wget https://apt.llvm.org/llvm.sh
@@ -12,7 +24,7 @@ install_llvm() {
 
 install_dependencies() {
   sudo apt update
-  sudo apt install -y build-essential
+  sudo apt install -y build-essential cmake
   install_llvm
 }
 
@@ -21,7 +33,7 @@ prepare_local_partition() {
   sudo mkfs.ext4 /dev/sda4
   sudo mkdir ${MOUNT_DIR}
   sudo mount -t ext4 /dev/sda4 ${MOUNT_DIR}
-  sudo chown -R ${SUDO_USER}:${GROUP} ${MOUNT_DIR}
+  sudo chown -R ${USER}:${GROUP} ${MOUNT_DIR}
 }
 
 prepare_machine() {
@@ -33,13 +45,13 @@ prepare_machine() {
 # Clone all repos
 clone_pdg() {
   pushd ${MOUNT_DIR}
-  git clone https://github.com/ARISTODE/program-dependence-graph.git pdg
+  git clone https://github.com/ARISTODE/program-dependence-graph.git pdg --recursive
   popd;
 }
 
 clone_linux() {
   pushd ${MOUNT_DIR}
-  git clone https://github.com/mars-research/lvd-linux/ --branch dev_vmfunc --depth 500
+  git clone https://github.com/mars-research/lvd-linux/ --branch dev_vmfunc --depth 500 --recursive
   popd;
 }
 
