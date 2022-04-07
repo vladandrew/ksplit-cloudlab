@@ -1,6 +1,7 @@
 #!/bin/bash
 
 MOUNT_DIR=/opt/ksplit
+LOG_FILE=${HOME}/ksplit-setup.log
 
 USER=${SUDO_USER}
 
@@ -16,19 +17,22 @@ fi
 
 # Install llvm-10 from apt.llvm.org
 install_llvm() {
-  wget https://apt.llvm.org/llvm.sh
-  chmod +x llvm.sh
-  sudo ./llvm.sh 10
+  echo "Downloading llvm script to ${HOME}/llvm.sh" >> ${LOG_FILE}
+  wget https://apt.llvm.org/llvm.sh -O ${HOME}/llvm.sh
+  chmod +x ${HOME}/llvm.sh
+  sudo ${HOME}/llvm.sh 10
   # TODO: Setup update-alternatives for clang
 }
 
 install_dependencies() {
+  echo "Installing dependencies..." >> ${LOG_FILE}
   sudo apt update
   sudo apt install -y build-essential cmake
   install_llvm
 }
 
 prepare_local_partition() {
+  echo "Preparing local partition ..." >> ${LOG_FILE}
   GROUP=$(getent group  | grep ${SUDO_GID} | cut -d':' -f1)
   sudo mkfs.ext4 /dev/sda4
   sudo mkdir ${MOUNT_DIR}
@@ -41,15 +45,16 @@ prepare_machine() {
   prepare_local_partition
 }
 
-
 # Clone all repos
 clone_pdg() {
+  echo "Cloning PDG" >> ${LOG_FILE}
   pushd ${MOUNT_DIR}
   git clone https://github.com/ARISTODE/program-dependence-graph.git pdg --recursive
   popd;
 }
 
 clone_linux() {
+  echo "Cloning LVD linux" >> ${LOG_FILE}
   pushd ${MOUNT_DIR}
   git clone https://github.com/mars-research/lvd-linux/ --branch dev_vmfunc --depth 500 --recursive
   popd;
@@ -62,12 +67,14 @@ clone_repos() {
 
 ## Build
 build_pdg() {
+  echo "Building PDG" >> ${LOG_FILE}
   pushd ${MOUNT_DIR}/pdg
   mkdir build && cd build;
   cmake .. && make -j $(nproc)
 }
 
 build_linux() {
+  echo "Building Linux" >> ${LOG_FILE}
   pushd ${MOUNT_DIR}/lvd-linux;
   cp config_lvd .config
   make -j $(nproc)
