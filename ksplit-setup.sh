@@ -27,7 +27,7 @@ install_llvm() {
 install_dependencies() {
   echo "Installing dependencies..." >> ${LOG_FILE}
   sudo apt update
-  sudo apt install -y build-essential cmake
+  sudo apt install -y build-essential cmake gawk
   install_llvm
 }
 
@@ -49,14 +49,14 @@ prepare_machine() {
 clone_pdg() {
   echo "Cloning PDG" >> ${LOG_FILE}
   pushd ${MOUNT_DIR}
-  git clone https://github.com/ARISTODE/program-dependence-graph.git pdg --recursive
+  git clone https://github.com/ARISTODE/program-dependence-graph.git pdg --recursive --branch partial_kernel
   popd;
 }
 
 clone_linux() {
   echo "Cloning LVD linux" >> ${LOG_FILE}
   pushd ${MOUNT_DIR}
-  git clone https://github.com/mars-research/lvd-linux/ --branch dev_vmfunc --depth 500 --recursive
+  git clone https://github.com/mars-research/lvd-linux/ --branch dev_ksplit --depth 500 --recursive
   popd;
 }
 
