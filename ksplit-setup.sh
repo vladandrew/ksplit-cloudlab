@@ -77,7 +77,8 @@ build_linux() {
   echo "Building Linux" >> ${LOG_FILE}
   pushd ${MOUNT_DIR}/lvd-linux;
   cp config_lvd .config
-  make -j $(nproc)
+  #make -j $(nproc)
+  make -j $(nproc) deb-pkg
 }
 
 build_all() {
@@ -88,3 +89,5 @@ build_all() {
 prepare_machine;
 clone_repos;
 build_all;
+
+chmod -x /local/repository/ksplit-setup.sh
