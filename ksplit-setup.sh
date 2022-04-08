@@ -27,7 +27,7 @@ install_llvm() {
 install_dependencies() {
   echo "Installing dependencies..." >> ${LOG_FILE}
   sudo apt update
-  sudo apt install -y build-essential cmake gawk
+  sudo apt install -y build-essential nasm cmake libelf-dev ncurses-dev docbook-utils gawk linux-headers-$(uname -r)
   install_llvm
 }
 
@@ -53,6 +53,17 @@ clone_pdg() {
   popd;
 }
 
+clone_bareflank() {
+  echo "Cloning Bareflank" >> ${LOG_FILE}
+  pushd ${MOUNT_DIR}
+  mkdir bflank
+  pushd bflank
+  git clone https://github.com/mars-research/lvd-bflank.git bflank --depth 100
+  mkdir cache build
+  popd;
+  popd;
+}
+
 clone_linux() {
   echo "Cloning LVD linux" >> ${LOG_FILE}
   pushd ${MOUNT_DIR}
@@ -62,6 +73,7 @@ clone_linux() {
 
 clone_repos() {
   clone_pdg;
+  clone_bareflank;
   clone_linux;
 }
 
@@ -73,16 +85,39 @@ build_pdg() {
   cmake .. && make -j $(nproc)
 }
 
+build_bareflank(){
+  echo "Building bareflank" >> ${LOG_FILE}
+  pushd ${MOUNT_DIR}/bflank/build
+  mv ../bflank/config.cmake ..
+  cmake ../bflank
+  make -j $(nproc)
+  popd;
+}
+
+build_module_init_tools(){
+  echo "Building module init tools" >> ${LOG_FILE}
+  aclocal -I m4 && automake --add-missing --copy && autoconf
+  ./configure --prefix=/ --program-prefix=lcd-
+  make
+  sudo make install-exec
+  popd;
+}
+
 build_linux() {
   echo "Building Linux" >> ${LOG_FILE}
   pushd ${MOUNT_DIR}/lvd-linux;
   cp config_lvd .config
-  #make -j $(nproc)
-  make -j $(nproc) deb-pkg
+  make -j $(nproc)
+  make -j $(nproc) modules
+  sudo make -j $(nproc) modules_install
+  sudo make -j $(nproc) headers_install
+  sudo make -j install
+  build_module_init_tools
 }
 
 build_all() {
   build_pdg;
+  build_bareflank;
   build_linux;
 }
 
