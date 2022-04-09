@@ -35,10 +35,9 @@ install_dependencies() {
 }
 
 prepare_local_partition() {
-  if [ $(file -sL /dev/sda4 | grep -o ext4) != "ext4" ]; then
+  if [ x$(sudo file -sL /dev/sda4 | grep -o ext4) == x"" ]; then
     echo "Preparing local partition ..." >> ${LOG_FILE}
-    GROUP=$(getent group  | grep ${SUDO_GID} | cut -d':' -f1)
-    sudo mkfs.ext4 /dev/sda4
+    sudo mkfs.ext4 -Fq /dev/sda4
     sudo mkdir ${MOUNT_DIR}
     sudo mount -t ext4 /dev/sda4 ${MOUNT_DIR}
     sudo chown -R ${USER}:${GROUP} ${MOUNT_DIR}
@@ -110,7 +109,7 @@ build_bareflank(){
 }
 
 build_module_init_tools(){
-  if [ $(command -v lcd-insmod) == "" ]; then
+  if [ x$(command -v lcd-insmod) == x"" ]; then
     echo "Building module init tools" >> ${LOG_FILE}
     aclocal -I m4 && automake --add-missing --copy && autoconf
     ./configure --prefix=/ --program-prefix=lcd-
