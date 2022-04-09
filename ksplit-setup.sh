@@ -54,7 +54,7 @@ clone_pdg() {
   if [ ! -d ${MOUNT_DIR}/pdg ]; then
     echo "Cloning PDG" >> ${LOG_FILE}
     pushd ${MOUNT_DIR}
-    git clone https://github.com/ARISTODE/program-dependence-graph.git pdg --recursive --branch partial_kernel
+    git clone https://github.com/ARISTODE/program-dependence-graph.git pdg --recursive --branch dev_ksplit
     popd;
   else
     echo "PDG dir not empty! skipping..." >> ${LOG_FILE}
@@ -92,10 +92,18 @@ clone_repos() {
 }
 
 ## Build
+build_svf() {
+  echo "Building PDG" >> ${LOG_FILE}
+  pushd ${MOUNT_DIR}/pdg/SVF
+  mkdir -p build && cd build;
+  cmake .. && make -j $(nproc)
+}
+
 build_pdg() {
   echo "Building PDG" >> ${LOG_FILE}
+  build_svf;
   pushd ${MOUNT_DIR}/pdg
-  mkdir build && cd build;
+  mkdir -p build && cd build;
   cmake .. && make -j $(nproc)
 }
 
