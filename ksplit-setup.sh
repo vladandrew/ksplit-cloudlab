@@ -18,11 +18,13 @@ fi
 
 # Install llvm-10 from apt.llvm.org
 install_llvm() {
-  echo "Downloading llvm script to ${HOME}/llvm.sh" >> ${LOG_FILE}
-  wget https://apt.llvm.org/llvm.sh -O ${HOME}/llvm.sh
-  chmod +x ${HOME}/llvm.sh
-  sudo ${HOME}/llvm.sh ${LLVM_VERSION}
-  sudo ./update-clang-alternatives.sh ${LLVM_VERSION} 200
+  if [ $(clang --version | grep -o "version [0-9\.]\+" | awk '{print $2}') != "10.0.1" ]; then
+    echo "Downloading llvm script to ${HOME}/llvm.sh" >> ${LOG_FILE}
+    wget https://apt.llvm.org/llvm.sh -O ${HOME}/llvm.sh
+    chmod +x ${HOME}/llvm.sh
+    sudo ${HOME}/llvm.sh ${LLVM_VERSION}
+    sudo ./update-alternatives-clang.sh ${LLVM_VERSION} 200
+  fi
 }
 
 install_dependencies() {
@@ -33,12 +35,14 @@ install_dependencies() {
 }
 
 prepare_local_partition() {
-  echo "Preparing local partition ..." >> ${LOG_FILE}
-  GROUP=$(getent group  | grep ${SUDO_GID} | cut -d':' -f1)
-  sudo mkfs.ext4 /dev/sda4
-  sudo mkdir ${MOUNT_DIR}
-  sudo mount -t ext4 /dev/sda4 ${MOUNT_DIR}
-  sudo chown -R ${USER}:${GROUP} ${MOUNT_DIR}
+  if [ $(file -sL /dev/sda4 | grep -o ext4) != "ext4" ]; then
+    echo "Preparing local partition ..." >> ${LOG_FILE}
+    GROUP=$(getent group  | grep ${SUDO_GID} | cut -d':' -f1)
+    sudo mkfs.ext4 /dev/sda4
+    sudo mkdir ${MOUNT_DIR}
+    sudo mount -t ext4 /dev/sda4 ${MOUNT_DIR}
+    sudo chown -R ${USER}:${GROUP} ${MOUNT_DIR}
+  fi
 }
 
 prepare_machine() {
@@ -48,28 +52,38 @@ prepare_machine() {
 
 # Clone all repos
 clone_pdg() {
-  echo "Cloning PDG" >> ${LOG_FILE}
-  pushd ${MOUNT_DIR}
-  git clone https://github.com/ARISTODE/program-dependence-graph.git pdg --recursive --branch partial_kernel
-  popd;
+  if [ ! -d ${MOUNT_DIR}/pdg ]; then
+    echo "Cloning PDG" >> ${LOG_FILE}
+    pushd ${MOUNT_DIR}
+    git clone https://github.com/ARISTODE/program-dependence-graph.git pdg --recursive --branch partial_kernel
+    popd;
+  else
+    echo "PDG dir not empty! skipping..." >> ${LOG_FILE}
+  fi
 }
 
 clone_bareflank() {
-  echo "Cloning Bareflank" >> ${LOG_FILE}
-  pushd ${MOUNT_DIR}
-  mkdir bflank
-  pushd bflank
-  git clone https://github.com/mars-research/lvd-bflank.git bflank --depth 100
-  mkdir cache build
-  popd;
-  popd;
+  if [ ! -d ${MOUNT_DIR}/bflank ]; then
+    mkdir -p ${MOUNT_DIR}/bflank;
+    echo "Cloning Bareflank" >> ${LOG_FILE}
+    pushd ${MOUNT_DIR}/bflank
+    git clone https://github.com/mars-research/lvd-bflank.git bflank --depth 100 --branch dev_ksplit
+    mkdir cache build
+    popd;
+  else
+    echo "Bareflank dir not empty! skipping..." >> ${LOG_FILE}
+  fi
 }
 
 clone_linux() {
-  echo "Cloning LVD linux" >> ${LOG_FILE}
-  pushd ${MOUNT_DIR}
-  git clone https://github.com/mars-research/lvd-linux/ --branch dev_ksplit --depth 500 --recursive
-  popd;
+  if [ ! -d ${MOUNT_DIR}/lvd-linux ]; then
+    echo "Cloning LVD linux" >> ${LOG_FILE}
+    pushd ${MOUNT_DIR}
+    git clone https://github.com/mars-research/lvd-linux/ --branch dev_ksplit --depth 500 --recursive
+    popd;
+  else
+    echo "lvd-linux dir not empty! skipping..." >> ${LOG_FILE}
+  fi
 }
 
 clone_repos() {
@@ -96,12 +110,21 @@ build_bareflank(){
 }
 
 build_module_init_tools(){
-  echo "Building module init tools" >> ${LOG_FILE}
-  aclocal -I m4 && automake --add-missing --copy && autoconf
-  ./configure --prefix=/ --program-prefix=lcd-
-  make
-  sudo make install-exec
-  popd;
+  if [ $(command -v lcd-insmod) == "" ]; then
+    echo "Building module init tools" >> ${LOG_FILE}
+    aclocal -I m4 && automake --add-missing --copy && autoconf
+    ./configure --prefix=/ --program-prefix=lcd-
+    make
+    sudo make install-exec
+    popd;
+  fi
+}
+
+install_linux() {
+  make -j $(nproc) modules
+  sudo make -j $(nproc) modules_install
+  sudo make -j $(nproc) headers_install
+  sudo make -j install
 }
 
 build_linux() {
@@ -109,10 +132,9 @@ build_linux() {
   pushd ${MOUNT_DIR}/lvd-linux;
   cp config_lvd .config
   make -j $(nproc)
-  make -j $(nproc) modules
-  sudo make -j $(nproc) modules_install
-  sudo make -j $(nproc) headers_install
-  sudo make -j install
+  if [ $(uname -r) != "4.8.4-lvd" ]; then
+    install_linux;
+  fi
   build_module_init_tools
 }
 
@@ -125,5 +147,3 @@ build_all() {
 prepare_machine;
 clone_repos;
 build_all;
-
-chmod -x /local/repository/ksplit-setup.sh
