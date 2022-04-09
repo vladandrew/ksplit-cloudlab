@@ -2,6 +2,7 @@
 
 MOUNT_DIR=/opt/ksplit
 LOG_FILE=${HOME}/ksplit-setup.log
+LLVM_VERSION=10
 
 USER=${SUDO_USER}
 
@@ -20,8 +21,8 @@ install_llvm() {
   echo "Downloading llvm script to ${HOME}/llvm.sh" >> ${LOG_FILE}
   wget https://apt.llvm.org/llvm.sh -O ${HOME}/llvm.sh
   chmod +x ${HOME}/llvm.sh
-  sudo ${HOME}/llvm.sh 10
-  # TODO: Setup update-alternatives for clang
+  sudo ${HOME}/llvm.sh ${LLVM_VERSION}
+  sudo ./update-clang-alternatives.sh ${LLVM_VERSION} 200
 }
 
 install_dependencies() {
