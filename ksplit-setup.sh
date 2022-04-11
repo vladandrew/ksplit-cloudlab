@@ -85,10 +85,22 @@ clone_linux() {
   fi
 }
 
+clone_bcfiles() {
+  if [ ! -d ${MOUNT_DIR}/bc-files ]; then
+    echo "Cloning bc-files" >> ${LOG_FILE}
+    pushd ${MOUNT_DIR}
+    git clone https://gitlab.flux.utah.edu/xcap/bc-files.git --depth 1
+    popd;
+  else
+    echo "bc-files dir not empty! skipping..." >> ${LOG_FILE}
+  fi
+}
+
 clone_repos() {
   clone_pdg;
   clone_bareflank;
   clone_linux;
+  clone_bcfiles;
 }
 
 ## Build
