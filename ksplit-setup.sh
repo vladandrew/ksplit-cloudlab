@@ -131,6 +131,7 @@ build_bareflank(){
 build_module_init_tools(){
   if [ x$(command -v lcd-insmod) == x"" ]; then
     echo "Building module init tools" >> ${LOG_FILE}
+    pushd lcd-domains/module-init-tools;
     aclocal -I m4 && automake --add-missing --copy && autoconf
     ./configure --prefix=/ --program-prefix=lcd-
     make
@@ -146,6 +147,14 @@ install_linux() {
   sudo make -j install
 }
 
+build_lcd_domains() {
+  echo "Building lcd-domains" >> ${LOG_FILE}
+  pushd lcd-domains;
+  # do NOT use -j as it corrupts the .o files
+  make
+  popd;
+}
+
 build_linux() {
   echo "Building Linux" >> ${LOG_FILE}
   pushd ${MOUNT_DIR}/lvd-linux;
@@ -155,6 +164,8 @@ build_linux() {
     install_linux;
   fi
   build_module_init_tools
+  build_lcd_domains
+  popd;
 }
 
 build_all() {
