@@ -41,6 +41,9 @@ prepare_local_partition() {
     sudo mkdir ${MOUNT_DIR}
     sudo mount -t ext4 /dev/sda4 ${MOUNT_DIR}
     sudo chown -R ${USER}:${GROUP} ${MOUNT_DIR}
+  else
+    sudo mount -t ext4 /dev/sda4 ${MOUNT_DIR}
+    sudo chown -R ${USER}:${GROUP} ${MOUNT_DIR}
   fi
 }
 
