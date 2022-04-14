@@ -16,10 +16,14 @@ else
   GROUP=$(getent group  | grep ${SUDO_GID} | cut -d':' -f1)
 fi
 
+record_log() {
+  echo "[$(date)] $1" >> ${LOG_FILE}
+}
+
 # Install llvm-10 from apt.llvm.org
 install_llvm() {
   if [ $(clang --version | grep -o "version [0-9\.]\+" | awk '{print $2}') != "10.0.1" ]; then
-    echo "Downloading llvm script to ${HOME}/llvm.sh" >> ${LOG_FILE}
+    record_log "Downloading llvm script to ${HOME}/llvm.sh"
     wget https://apt.llvm.org/llvm.sh -O ${HOME}/llvm.sh
     chmod +x ${HOME}/llvm.sh
     sudo ${HOME}/llvm.sh ${LLVM_VERSION}
@@ -28,7 +32,8 @@ install_llvm() {
 }
 
 install_dependencies() {
-  echo "Installing dependencies..." >> ${LOG_FILE}
+  record_log "Begin setup!"
+  record_log "Installing dependencies..."
   sudo apt update
   sudo apt install -y build-essential nasm cmake libelf-dev libncurses5-dev gawk linux-headers-$(uname -r)
   install_llvm
@@ -36,7 +41,7 @@ install_dependencies() {
 
 prepare_local_partition() {
   if [ x$(sudo file -sL /dev/sda4 | grep -o ext4) == x"" ]; then
-    echo "Preparing local partition ..." >> ${LOG_FILE}
+    record_log "Preparing local partition ..."
     sudo mkfs.ext4 -Fq /dev/sda4
     sudo mkdir ${MOUNT_DIR}
     sudo mount -t ext4 /dev/sda4 ${MOUNT_DIR}
@@ -55,47 +60,46 @@ prepare_machine() {
 # Clone all repos
 clone_pdg() {
   if [ ! -d ${MOUNT_DIR}/pdg ]; then
-    echo "Cloning PDG" >> ${LOG_FILE}
+    record_log "Cloning PDG"
     pushd ${MOUNT_DIR}
     git clone https://github.com/ARISTODE/program-dependence-graph.git pdg --recursive --branch dev_ksplit
     popd;
   else
-    echo "PDG dir not empty! skipping..." >> ${LOG_FILE}
+    record_log "PDG dir not empty! skipping..."
   fi
 }
 
 clone_bareflank() {
   if [ ! -d ${MOUNT_DIR}/bflank ]; then
     mkdir -p ${MOUNT_DIR}/bflank;
-    echo "Cloning Bareflank" >> ${LOG_FILE}
+    record_log "Cloning Bareflank"
     pushd ${MOUNT_DIR}/bflank
     git clone https://github.com/mars-research/lvd-bflank.git bflank --depth 100 --branch dev_ksplit
     mkdir cache build
     popd;
   else
-    echo "Bareflank dir not empty! skipping..." >> ${LOG_FILE}
+    record_log "Bareflank dir not empty! skipping..."
   fi
 }
 
-clone_linux() {
-  if [ ! -d ${MOUNT_DIR}/lvd-linux ]; then
-    echo "Cloning LVD linux" >> ${LOG_FILE}
+clone_linux() {  if [ ! -d ${MOUNT_DIR}/lvd-linux ]; then
+    record_log "Cloning LVD linux"
     pushd ${MOUNT_DIR}
     git clone https://github.com/mars-research/lvd-linux/ --branch dev_ksplit --depth 500 --recursive
     popd;
   else
-    echo "lvd-linux dir not empty! skipping..." >> ${LOG_FILE}
+    record_log "lvd-linux dir not empty! skipping..."
   fi
 }
 
 clone_bcfiles() {
   if [ ! -d ${MOUNT_DIR}/bc-files ]; then
-    echo "Cloning bc-files" >> ${LOG_FILE}
+    record_log "Cloning bc-files"
     pushd ${MOUNT_DIR}
     git clone https://gitlab.flux.utah.edu/xcap/bc-files.git --depth 1
     popd;
   else
-    echo "bc-files dir not empty! skipping..." >> ${LOG_FILE}
+    record_log "bc-files dir not empty! skipping..."
   fi
 }
 
@@ -108,14 +112,14 @@ clone_repos() {
 
 ## Build
 build_svf() {
-  echo "Building PDG" >> ${LOG_FILE}
+  record_log "Building PDG"
   pushd ${MOUNT_DIR}/pdg/SVF
   mkdir -p build && cd build;
   cmake .. && make -j $(nproc)
 }
 
 build_pdg() {
-  echo "Building PDG" >> ${LOG_FILE}
+  record_log "Building PDG"
   build_svf;
   pushd ${MOUNT_DIR}/pdg
   mkdir -p build && cd build;
@@ -123,7 +127,7 @@ build_pdg() {
 }
 
 build_bareflank(){
-  echo "Building bareflank" >> ${LOG_FILE}
+  record_log "Building bareflank"
   pushd ${MOUNT_DIR}/bflank/build
   mv ../bflank/config.cmake ..
   cmake ../bflank
@@ -133,7 +137,7 @@ build_bareflank(){
 
 build_module_init_tools(){
   if [ x$(command -v lcd-insmod) == x"" ]; then
-    echo "Building module init tools" >> ${LOG_FILE}
+    record_log "Building module init tools"
     pushd lcd-domains/module-init-tools;
     aclocal -I m4 && automake --add-missing --copy && autoconf
     ./configure --prefix=/ --program-prefix=lcd-
@@ -151,7 +155,7 @@ install_linux() {
 }
 
 build_lcd_domains() {
-  echo "Building lcd-domains" >> ${LOG_FILE}
+  record_log "Building lcd-domains"
   pushd lcd-domains;
   # do NOT use -j as it corrupts the .o files
   make
@@ -159,7 +163,7 @@ build_lcd_domains() {
 }
 
 build_linux() {
-  echo "Building Linux" >> ${LOG_FILE}
+  record_log "Building Linux"
   pushd ${MOUNT_DIR}/lvd-linux;
   cp config_lvd .config
   make -j $(nproc)
@@ -180,3 +184,4 @@ build_all() {
 prepare_machine;
 clone_repos;
 build_all;
+record_log "Done Setting up!"
