@@ -112,7 +112,7 @@ clone_repos() {
 
 ## Build
 build_svf() {
-  record_log "Building PDG"
+  record_log "Building SVF"
   pushd ${MOUNT_DIR}/pdg/SVF
   mkdir -p build && cd build;
   cmake .. && make -j $(nproc)
