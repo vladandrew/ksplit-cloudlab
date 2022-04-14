@@ -30,7 +30,7 @@ install_llvm() {
 install_dependencies() {
   echo "Installing dependencies..." >> ${LOG_FILE}
   sudo apt update
-  sudo apt install -y build-essential nasm cmake libelf-dev ncurses-dev docbook-utils gawk linux-headers-$(uname -r)
+  sudo apt install -y build-essential nasm cmake libelf-dev libncurses5-dev gawk linux-headers-$(uname -r)
   install_llvm
 }
 
