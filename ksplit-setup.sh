@@ -190,6 +190,7 @@ build_linux() {
 build_idlc() {
   record_log "Building Linux"
   pushd ${MOUNT_DIR}/lcds-idl;
+  ./setup
   mkdir build && cd build
   cmake ..
   make -j $(nproc)
