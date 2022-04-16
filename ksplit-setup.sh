@@ -103,11 +103,23 @@ clone_bcfiles() {
   fi
 }
 
+clone_idlc() {
+  if [ ! -d ${MOUNT_DIR}/lcds-idl ]; then
+    record_log "Cloning lcds-idl"
+    pushd ${MOUNT_DIR}
+    git clone https://gitlab.flux.utah.edu/xcap/lcds-idl.git --branch feature-locks
+    popd;
+  else
+    record_log "lcds-idl dir not empty! skipping..."
+  fi
+}
+
 clone_repos() {
   clone_pdg;
   clone_bareflank;
   clone_linux;
   clone_bcfiles;
+  clone_idlc;
 }
 
 ## Build
@@ -175,10 +187,21 @@ build_linux() {
   popd;
 }
 
+build_idlc() {
+  record_log "Building Linux"
+  pushd ${MOUNT_DIR}/lcds-idl;
+  mkdir build && cd build
+  cmake ..
+  make -j $(nproc)
+  ./idlc
+  popd
+}
+
 build_all() {
   build_pdg;
   build_bareflank;
   build_linux;
+  build_idlc;
 }
 
 prepare_machine;
