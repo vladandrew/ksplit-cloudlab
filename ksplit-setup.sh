@@ -188,7 +188,7 @@ build_linux() {
 }
 
 build_idlc() {
-  record_log "Building Linux"
+  record_log "Building idlc"
   pushd ${MOUNT_DIR}/lcds-idl;
   ./setup
   mkdir build && cd build
