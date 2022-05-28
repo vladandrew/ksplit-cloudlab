@@ -132,13 +132,13 @@ clone_bcfiles() {
 }
 
 clone_idlc() {
-  if [ ! -d ${MOUNT_DIR}/lcds-idl ]; then
-    record_log "Cloning lcds-idl"
+  if [ ! -d ${MOUNT_DIR}/idlc ]; then
+    record_log "Cloning idlc"
     pushd ${MOUNT_DIR}
     git clone ${IDLC_GIT_REPO} --branch feature-locks
     popd;
   else
-    record_log "lcds-idl dir not empty! skipping..."
+    record_log "idlc dir not empty! skipping..."
   fi
 }
 
@@ -217,7 +217,7 @@ build_linux() {
 
 build_idlc() {
   record_log "Building idlc"
-  pushd ${MOUNT_DIR}/lcds-idl;
+  pushd ${MOUNT_DIR}/idlc;
   ./setup
   mkdir -p build && cd build
   cmake ..
