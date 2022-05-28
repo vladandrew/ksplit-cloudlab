@@ -19,7 +19,7 @@ fi
 BCFILES_GIT_REPO="https://github.com/ksplit/bc-files.git"
 BFLANK_GIT_REPO="https://github.com/ksplit/bflank.git"
 IDLC_GIT_REPO="https://github.com/ksplit/idlc.git"
-LVDKERNEL_GIT_REPO="https://github.com/ksplit/lvd-kernel.git"
+LVDKERNEL_GIT_REPO="https://github.com/ksplit/lvd-linux.git"
 PDG_GIT_REPO="https://github.com/ksplit/pdg.git"
 
 record_log() {
