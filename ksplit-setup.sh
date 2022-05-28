@@ -16,6 +16,12 @@ else
   GROUP=$(getent group  | grep ${SUDO_GID} | cut -d':' -f1)
 fi
 
+BCFILES_GIT_REPO="https://github.com/ksplit/bc-files.git"
+BFLANK_GIT_REPO="https://github.com/ksplit/bflank.git"
+IDLC_GIT_REPO="https://github.com/ksplit/idlc.git"
+LVDKERNEL_GIT_REPO="https://github.com/ksplit/lvd-kernel.git"
+PDG_GIT_REPO="https://github.com/ksplit/pdg.git"
+
 record_log() {
   echo "[$(date)] $1" >> ${LOG_FILE}
 }
@@ -84,7 +90,7 @@ clone_pdg() {
   if [ ! -d ${MOUNT_DIR}/pdg ]; then
     record_log "Cloning PDG"
     pushd ${MOUNT_DIR}
-    git clone https://github.com/ARISTODE/program-dependence-graph.git pdg --recursive --branch dev_ksplit
+    git clone ${PDG_GIT_REPO} pdg --recursive --branch dev_ksplit
     popd;
   else
     record_log "PDG dir not empty! skipping..."
@@ -96,7 +102,7 @@ clone_bareflank() {
     mkdir -p ${MOUNT_DIR}/bflank;
     record_log "Cloning Bareflank"
     pushd ${MOUNT_DIR}/bflank
-    git clone https://github.com/mars-research/lvd-bflank.git bflank --depth 100 --branch dev_ksplit
+    git clone ${BFLANK_GIT_REPO} bflank --depth 100 --branch dev_ksplit
     mkdir cache build
     popd;
   else
@@ -107,7 +113,7 @@ clone_bareflank() {
 clone_linux() {  if [ ! -d ${MOUNT_DIR}/lvd-linux ]; then
     record_log "Cloning LVD linux"
     pushd ${MOUNT_DIR}
-    git clone https://github.com/mars-research/lvd-linux/ --branch dev_ksplit --depth 500 --recursive
+    git clone ${LVDKERNEL_GIT_REPO} --branch dev_ksplit --depth 500 --recursive
     popd;
   else
     record_log "lvd-linux dir not empty! skipping..."
@@ -118,7 +124,7 @@ clone_bcfiles() {
   if [ ! -d ${MOUNT_DIR}/bc-files ]; then
     record_log "Cloning bc-files"
     pushd ${MOUNT_DIR}
-    git clone https://gitlab.flux.utah.edu/xcap/bc-files.git --depth 1
+    git clone ${BCFILES_GIT_REPO} --depth 1
     popd;
   else
     record_log "bc-files dir not empty! skipping..."
@@ -129,7 +135,7 @@ clone_idlc() {
   if [ ! -d ${MOUNT_DIR}/lcds-idl ]; then
     record_log "Cloning lcds-idl"
     pushd ${MOUNT_DIR}
-    git clone https://gitlab.flux.utah.edu/xcap/lcds-idl.git --branch feature-locks
+    git clone ${IDLC_GIT_REPO} --branch feature-locks
     popd;
   else
     record_log "lcds-idl dir not empty! skipping..."
