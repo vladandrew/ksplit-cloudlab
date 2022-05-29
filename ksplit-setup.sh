@@ -135,7 +135,7 @@ clone_idlc() {
   if [ ! -d ${MOUNT_DIR}/idlc ]; then
     record_log "Cloning idlc"
     pushd ${MOUNT_DIR}
-    git clone ${IDLC_GIT_REPO} --branch feature-locks
+    git clone ${IDLC_GIT_REPO} --branch dev_ksplit
     popd;
   else
     record_log "idlc dir not empty! skipping..."
